@@ -95,21 +95,36 @@ class UserInfo extends Command {
 	 * @param {user} GuildMember The member to get information of
 	 * @returns {embed}
 	*/
-	async createEmbed(bot, guild, member) {
+	createEmbed(bot, guild, member) {
 		const roles = [...member.roles.cache.sort((a, b) => b.position - a.position).values()];
-		const supportGuild = bot.guilds.cache.get(bot.config.SupportServer.GuildID);
-		let isContributor, isSupport, isDev = false;
 
+		// CHECK USERS SUPPORT ROLES
+
+		const supportGuild = bot.guilds.cache.get(bot.config.SupportServer.GuildID);
+
+		let isOwner = false;
+		let isOfficialBots = false;
+		let isDiscordmanager = false;
+		let isCommunitymanager = false;
+		let isAdministrator = false;
+		let isModerator = false;
+		let isTrialModerator = false;
+		let isDeveloper = false;
+		let isLegends = false;
 		try {
-			const memberInSupportGuild = await supportGuild.members.fetch(member.user.id);
-			if (memberInSupportGuild !== null) {
-				isContributor = memberInSupportGuild.roles.cache.some(role => role.id === bot.config.Staff.ContributorRole);
-				isSupport = memberInSupportGuild.roles.cache.some(role => role.id === bot.config.Staff.SupportRole);
-				isDev = memberInSupportGuild.roles.cache.some(role => role.id === bot.config.Staff.DeveloperRole);
-			}
+			isOwner = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.OwnerRole);
+			isOfficialBots = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.OfficialBotsRole);
+			isDiscordmanager = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.DiscordManagerRole);
+			isCommunitymanager = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.CommunityManagerRole);
+			isAdministrator = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.AdministratorRole);
+			isModerator = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.ModeratorRole);
+			isTrialModerator = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.TrialModeratorRole);
+			isDeveloper = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.DeveloperRole);
+			isLegends = supportGuild.members.cache.get(member.user.id).roles.cache.some(role => role.id === bot.config.Staff.LegendsRole);
 		} catch (err) {
-			bot.logger.error(`Command: '${this.help.name}' has error: ${err.message}.`);
 		}
+
+		// END CHECK USERS SUPPORT ROLES
 
 		while (roles.join(', ').length >= 1021) {
 			roles.pop();
@@ -127,7 +142,7 @@ class UserInfo extends Command {
 			.setThumbnail(member.user.displayAvatarURL({ format: 'png', size: 512 }))
 			.addFields(
 				{ name: bot.translate('guild/user-info:USERNAME', {}, guild.settings?.Language), value: member.user.displayName, inline: true },
-				{ name: bot.translate('guild/user-info:DISCRIM', {}, guild.settings?.Language), value: `${member.user.discriminator}`, inline: true },
+				
 				{ name: bot.translate('guild/user-info:ROBOT', {}, guild.settings?.Language), value: bot.translate(`misc:${member.user.bot ? 'YES' : 'NO'}`, {}, guild.settings?.Language), inline: true },
 				{ name: bot.translate('guild/user-info:CREATE', {}, guild.settings?.Language), value: moment(member.user.createdAt).format('lll'), inline: true },
 				{ name: bot.translate('guild/user-info:STATUS', {}, guild.settings?.Language), value: `\`${status}\``, inline: true },
@@ -144,11 +159,17 @@ class UserInfo extends Command {
 		}
 
 		// Staff only vales
-		if (isContributor | isSupport | isDev) {
-			const contributer = isContributor ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.ContributorRole).name}` : ``;
-			const support = isSupport ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.SupportRole).name}` : ``;
-			const dev = isDev ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.DeveloperRole).name}` : ``;
-			embed.addFields({ name: bot.translate('guild/user-info:BOT', {}, guild.settings?.Language), value: `${contributer} ${support} ${dev}`, inline: true });
+		if (isOwner | isAdministrator | isOfficialBots | isModerator | isDiscordmanager | isCommunitymanager | isModerator | isTrialModerator | isDeveloper | isLegends) {
+			const owner = isOwner ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.OwnerRole).name}` : '';
+			const officialbots = isOfficialBots ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.OfficialBotsRole).name}` : '';
+			const discordmanager = isDiscordmanager ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.DiscordManagerRole).name}` : '';
+			const communitymanager = isCommunitymanager ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.CommunityManagerRole).name}` : '';
+			const admin = isAdministrator ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.AdministratorRole).name}` : '';
+			const mod = isModerator ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.ModeratorRole).name}` : '';
+			const trialmod = isTrialModerator ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.TrialModeratorRole).name}` : '';
+			const developers = isDeveloper ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.DeveloperRole).name}` : '';
+			const legends = isLegends ? `${supportGuild.roles.cache.find(role => role.id === bot.config.Staff.LegendsRole).name}` : '';
+			embed.addFields({ name: bot.translate('guild/user-info:BOT', {}, guild.settings?.Language), value: `${owner} ${discordmanager} ${officialbots} ${communitymanager} ${admin} ${mod} ${trialmod} ${developers} ${legends}`, inline: true });
 		}
 		return embed;
 	}
